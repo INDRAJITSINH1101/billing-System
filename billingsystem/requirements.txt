@@ -51,7 +51,7 @@ fonttools==4.63.0
 fpdf2==2.7.6
 google-api-core==2.30.0
 google-api-python-client==2.197.0
-google-auth==2.4.9.1
+google-auth==2.49.1
 google-auth-httplib2==0.4.0
 google-cloud-core==2.5.0
 google-cloud-firestore==2.26.0
@@ -119,7 +119,7 @@ python-dotenv==1.2.1
 pyttsx3==2.90
 pytweening==1.2.0
 pytz==2023.3
-pywin32==306
+pywin32==311
 PyYAML==6.0.3
 qrcode==8.0
 redis==7.2.0
