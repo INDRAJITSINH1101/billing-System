@@ -1,0 +1,175 @@
+.details-container {
+    max-width: 850px;
+    margin: 30px auto;
+    padding: 25px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.05);
+}
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.details-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+.details-header .actions a {
+    margin-left: 10px;
+    padding: 8px 15px;
+    font-size: 14px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+.actions .btn-download {
+    background: #000;
+    color: #fff;
+}
+.actions .btn-back {
+    border: 1px solid #ccc;
+    color: #333;
+}
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+.info-item label {
+    display: block;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+.info-item p {
+    margin: 0;
+    font-size: 15px;
+    font-weight: bold;
+}
+.item-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.item-table th {
+    background: #000;
+    color: white;
+    font-size: 13px;
+    padding: 10px;
+    border: 1px solid #000;
+    text-align: center;
+}
+.item-table td {
+    border: 1px solid #000;
+    padding: 8px 10px;
+    font-size: 14px;
+}
+.total-summary {
+    width: 300px;
+    float: right;
+    margin-top: 20px;
+}
+.total-summary table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.total-summary table td {
+    padding: 8px;
+    font-size: 15px;
+    border: 1px solid #000;
+}
+.total-summary .label {
+    font-weight: 600;
+    background-color: #f7f7f7;
+    width: 60%;
+}
+.total-summary .amount {
+    text-align: right;
+    font-weight: bold;
+}
+.grand-total-row td {
+    background: #000;
+    color: white;
+    font-size: 16px !important;
+}
+@media (max-width: 850px) {
+
+    .details-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .total-summary {
+        float: none;
+        width: 100%;
+    }
+
+    table.item-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* ---------- PRINT FIX ---------- */
+@media print {
+
+    /* Hide full layout from base.html */
+    header,
+    footer,
+    nav,
+    .navbar,
+    .sidebar,
+    .topbar,
+    .language-switcher,
+    .logout-button,
+    .btn-back,
+    .btn-download,
+    .actions {
+        display: none !important;
+    }
+
+    /* Hide all parent containers from base.html */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Make invoice content visible */
+    .details-container,
+    .details-container * {
+        visibility: visible;
+    }
+
+    /* Print only the invoice section */
+    .details-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+}
+@page {
+    margin: 0;   /* Removes browser header/footer */
+}
+body {
+    margin: 1cm; /* Re-add your own safe margin */
+}
+
+
+

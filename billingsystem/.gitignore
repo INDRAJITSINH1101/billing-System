@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media & static generated
+/media
+/staticfiles
+
+# VS Code / IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# dotenv (VERY IMPORTANT)
+.env
+
+# Pytest / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Migrations cache
+**/__pycache__/
+
+# ServiceKey
+serviceAccountKey.json

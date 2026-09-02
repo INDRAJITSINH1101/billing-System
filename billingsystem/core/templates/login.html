@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Admin Login{% endblock %}
+{% load i18n %}
+{% block content %}
+
+<div style="max-width:400px;margin:60px auto;border:1px solid #ccc;padding:25px;border-radius:5px;">
+    <h2 style="text-align:center;margin-bottom:25px;">Admin Login</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <label>{% trans "Username" %}</label>
+        <input type="text" name="username" required
+               style="width:100%;padding:8px;margin:6px 0;border:1px solid #999;border-radius:3px;">
+
+        <label>{% trans "Password"%}</label>
+        <input type="password" name="password" required
+               style="width:100%;padding:8px;margin:6px 0;border:1px solid #999;border-radius:3px;">
+
+        <button type="submit"
+                style="width:100%;padding:10px;background:#000;color:#fff;border:none;border-radius:3px;margin-top:12px;">
+            Sign In
+        </button>
+
+        {% comment %} <p style="text-align:center;margin-top:14px;font-size:14px;color:#555;">
+            Don't have an account?
+            <a href="{% url 'signup' %}" style="color:#000;text-decoration:underline;">Sign Up</a>
+        </p> {% endcomment %}
+
+        {% if error %}
+            <div style="background:#ffdddd;padding:8px;margin-bottom:10px;color:#900">
+                {{ error }}
+            </div>
+        {% endif %}
+
+    </form>
+</div>
+
+{% endblock %}

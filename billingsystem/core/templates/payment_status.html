@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Payment Status{% endblock %}
+{% block content %}
+<div class="status-container" style="padding: 20px; text-align: center;">
+    {% if status == 'paid' %}  <h2 style="color: green;">✅ Payment Successful!</h2>
+        <p>Your payment for Bill #{{ bill.invoice_number }} has been processed.</p>
+        <p>{{ message }}</p>
+        <p>You can view the details <a href="{% url 'bill-details' bill.id %}">here</a>.</p>
+    {% elif status == 'cancelled' %} <h2 style="color: orange;">❌ Payment Cancelled.</h2>
+        <p>The payment process was cancelled for Bill #{{ bill.invoice_number }}.</p>
+        <p><a href="{% url 'bill-details' bill.id %}">Go back to Bill Details</a></p>
+    {% else %}
+        <h2 style="color: red;">⚠️ Payment Status: {{ status|title }}</h2>
+        <p>{{ message }}</p>
+        {% if bill %}
+        <p><a href="{% url 'bill-details' bill.id %}">Go back to Bill Details</a></p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

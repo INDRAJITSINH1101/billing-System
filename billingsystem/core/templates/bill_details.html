@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}{{ invoice_no }}{% endblock %}
+{%load static%}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/bill_details.css' %}">
+
+
+<div class="details-container">
+    <div class="details-header">
+        <h2>{{ invoice_no }}</h2>
+        <div class="actions">
+            <a href="{% url 'bills-list' %}" class="btn-back">Back to List</a>
+            <a href="{% url 'bill-download' bill.id %}" class="btn-download">Download PDF</a>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <label>Customer Name</label>
+            <p>{{ bill.customer_name }}</p>
+        </div>
+        <div class="info-item">
+            <label>Invoice Number</label>
+            <p>{{ invoice_no }}</p>
+        </div>
+        <div class="info-item">
+            <label>Phone</label>
+            <p>{{ bill.phone|default:"N/A" }}</p>
+        </div>
+        <div class="info-item">
+            <label>Date Created</label>
+            <p>{{ bill.created_at|date:"d M Y h:i A" }}</p>
+        </div>
+        <div class="info-item">
+            <label>Email</label>
+            <p>{{ bill.email|default:"N/A" }}</p>
+        </div>
+        <div class="info-item">
+            <label>Created By</label>
+            <p>{{ bill.created_by.username }}</p>
+        </div>
+    </div>
+
+    <p style="margin-top:10px;">
+        <strong>Payment Status:</strong>
+            {% if payment_status == 'Paid' %}
+                <span style="color: green; font-weight: bold;">{{ payment_status }}</span>
+            {% else %}
+                <span style="color: orange; font-weight: bold;">{{ payment_status }}</span>
+            {% endif %}
+    </p>
+
+    <p>
+        <strong>Payment Method:</strong>
+        {% if bill.is_paid %}
+            {{ bill.payment.gateway|upper }}
+        {% else %}
+            N/A
+        {% endif %}
+    </p>
+
+    <p>
+        <strong>Transaction ID:</strong>
+        {% if bill.is_paid and bill.payment.gateway_id %}
+            {{ bill.payment.gateway_id }}
+        {% else %}
+            N/A
+        {% endif %}
+    </p>
+
+
+    <h3 style="margin-top: 30px; border-bottom: 1px solid #000; padding-bottom: 5px;">Item Details</h3>
+    <table class="item-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">S.No.</th>
+                <th style="width: 50%;">Product Name</th>
+                <th style="width: 15%;">Qty</th>
+                <th style="width: 15%;">Rate</th>
+                <th style="width: 15%;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td style="text-align: center;">{{ forloop.counter }}</td>
+                <td>{{ item.product_name }}</td>
+                <td style="text-align: center;">{{ item.qty }}</td>
+                <td style="text-align: right;">{{ item.rate }}</td>
+                <td style="text-align: right;">{{ item.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-summary">
+        <table>
+            <tr>
+                <td class="label">Sub Total:</td>
+                <td class="amount">₹{{ bill.sub_total|floatformat:2 }}</td>
+            </tr>
+            {% comment %} SHOW PERCENT DISCOUNT IF > 0 {% endcomment %}
+{# -------- PERCENTAGE DISCOUNT -------- #}
+{% if bill.discount_percent and bill.discount_percent|floatformat:2 != "0.00" %}
+<tr>
+    <td class="label">
+        Discount ({{ bill.discount_percent|floatformat:2 }}%)
+    </td>
+    <td class="amount">
+        -₹{{ bill.final_discount|floatformat:2 }}
+    </td>
+</tr>
+{% endif %}
+
+{# -------- FLAT DISCOUNT -------- #}
+{% if bill.discount_amount and bill.discount_amount|floatformat:2 != "0.00" %}
+<tr>
+    <td class="label">
+        Discount (Flat)
+    </td>
+    <td class="amount">
+        -₹{{ bill.discount_amount|floatformat:2 }}
+    </td>
+</tr>
+{% endif %}
+
+            <tr>
+                <td class="label">Taxable Amount:</td>
+                <td class="amount">₹{{ bill.taxable_amount|floatformat:2 }}</td>
+            </tr>
+            {% if bill.sgst_rate > 0 %}
+            <tr>
+                <td class="label">SGST ({{ bill.sgst_rate|floatformat:2 }}%):</td>
+                <td class="amount">₹{{ bill.sgst_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if bill.cgst_rate > 0 %}
+            <tr>
+                <td class="label">CGST ({{ bill.cgst_rate|floatformat:2 }}%):</td>
+                <td class="amount">₹{{ bill.cgst_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="grand-total-row">
+                <td>GRAND TOTAL:</td>
+                <td class="amount">₹{{ bill.total_amount|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+<div style="clear: both;"></div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("print") === "yes") {
+        window.print();
+    }
+</script>
+
+{% endblock %}

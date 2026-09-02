@@ -1,0 +1,102 @@
+{%load static%} {% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Billing System{% endblock %}</title>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <div class="navbar">
+      <!-- Left Section -->
+      <div class="navbar-logo">Company Logo</div>
+
+      <!-- Middle Menu -->
+      {% if user.is_authenticated %}
+      <div class="navbar-menu">
+        <a href="{% url 'bills-list' %}">All Bills</a>
+      </div>
+      {% endif %}
+
+      <!-- Right Section -->
+      <div class="navbar-menu">
+        <!-- Language -->
+        <form action="{% url 'set_language' %}" method="post">
+          {% csrf_token %}
+          <div id="google_translate_element"></div>
+
+          <script>
+            function googleTranslateElementInit() {
+              new google.translate.TranslateElement(
+                {
+                  pageLanguage: "en",
+                  includedLanguages: "en,hi,gu,mr,ta,te,bn,pa,kn,ml",
+                  autoDisplay: false,
+                },
+                "google_translate_element"
+              );
+            }
+
+            // Load Google Translate
+            (function () {
+              var gt = document.createElement("script");
+              gt.type = "text/javascript";
+              gt.async = true;
+              gt.src =
+                "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+              document.body.appendChild(gt);
+            })();
+
+            // Auto Translate
+            function autoTranslate(lang) {
+              if (!lang) return;
+
+              let attempts = 0;
+
+              function applyTranslation() {
+                const frame = document.querySelector(
+                  "iframe.goog-te-menu-frame"
+                );
+
+                if (frame) {
+                  const langOption = frame.contentWindow.document.querySelector(
+                    `a[lang="${lang}"]`
+                  );
+                  if (langOption) {
+                    langOption.click();
+                    return;
+                  }
+                }
+
+                attempts++;
+                if (attempts < 30) {
+                  setTimeout(applyTranslation, 300);
+                }
+              }
+
+              applyTranslation();
+            }
+          </script>
+        </form>
+
+        <!-- Auth Buttons -->
+        {% if user.is_authenticated %}
+        <a href="{% url 'logout' %}" class="btn-small">Logout</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn-small">Sign In</a>
+        <a href="{% url 'signup' %}" class="btn-small">Sign Up</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">{% block content %} {% endblock %}</div>
+  </body>
+</html>

@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}All Bills{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/bill_list.css' %}">
+
+<div class="bill-container">
+
+    <div class="dashboard-cards">
+
+        <div class="metric-card">
+            <h3>Total Bill Amount (All Time)</h3>
+            <p>₹{{ metrics.total_all_time_sum|floatformat:2 }}</p>
+            <p class="bill-count">{{ metrics.total_all_time_count }} Bills</p>
+        </div>
+
+        <div class="metric-card">
+            <h3>Last 2 Days Bill</h3>
+            <p>₹{{ metrics.last_2_days_sum|floatformat:2 }}</p>
+            <p class="bill-count">{{ metrics.last_2_days_count }} Bills</p>
+        </div>
+
+        <div class="metric-card">
+            <h3>Last 1 Week Bill</h3>
+            <p>₹{{ metrics.last_1_week_sum|floatformat:2 }}</p>
+            <p class="bill-count">{{ metrics.last_1_week_count }} Bills</p>
+        </div>
+
+        <div class="metric-card">
+            <h3>Last 1 Month Bill</h3>
+            <p>₹{{ metrics.last_1_month_sum|floatformat:2 }}</p>
+            <p class="bill-count">{{ metrics.last_1_month_count }} Bills</p>
+        </div>
+
+    </div>
+
+    <div class="bill-header">
+        <h2>All Bills</h2>
+        <a href="{% url 'bill-create' %}" class="btn-create">+ Create New Bill</a>
+    </div>
+
+    <form method="GET" class="filter-form">
+
+        <div class="filter-group">
+            <label for="id_search">Bill No / Customer Name</label>
+            <input type="search" id="id_search" name="search"
+                   value="{{ filter_params.search|default:'' }}"
+                   placeholder="Invoice/Customer Name">
+        </div>
+
+        <div class="filter-group">
+            <label for="id_date_from">Date From</label>
+            <input type="date" id="id_date_from" name="date_from"
+                   value="{{ filter_params.date_from|default:'' }}">
+        </div>
+
+        <div class="filter-group">
+            <label for="id_date_to">Date To</label>
+            <input type="date" id="id_date_to" name="date_to"
+                   value="{{ filter_params.date_to|default:'' }}">
+        </div>
+
+        <div class="filter-group">
+            <label for="id_amount_min">Amount Min (₹)</label>
+            <input type="number" id="id_amount_min" name="amount_min"
+                   value="{{ filter_params.amount_min|default:'' }}"
+                   placeholder="Min Amt">
+        </div>
+
+        <div class="filter-group">
+            <label for="id_amount_max">Amount Max (₹)</label>
+            <input type="number" id="id_amount_max" name="amount_max"
+                   value="{{ filter_params.amount_max|default:'' }}"
+                   placeholder="Max Amt">
+        </div>
+
+        <div class="filter-buttons">
+            <button type="submit" class="btn-search">Search</button>
+            <a href="{% url 'bills-list' %}" class="btn-reset">Reset</a>
+        </div>
+    </form>
+    <div class="table-wrapper">
+        <table class="bill-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Invoice No</th>
+                    <th>Customer</th>
+                    <th>Total Amount</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Method</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for bill in bills %}
+                <tr>
+                    <td>{{ bill.id }}</td>
+                    <td>{{ bill.invoice_number }}</td>
+                    <td>
+                        <a href="{% url 'bill-details' bill.id %}" class="customer-link">
+                            {{ bill.customer_name }}
+                        </a>
+                    </td>
+                    <td><b>₹{{ bill.total_amount }}</b></td>
+                    <td>{{ bill.created_at|date:"d-m-Y" }}</td>
+                    <td>
+                        {% if bill.is_paid %}
+                            <span style="background-color: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">PAID</span>
+                        {% else %}
+                            <span style="background-color: #ffc107; color: #212529; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">UNPAID</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if bill.payment %}
+                            {{ bill.payment.gateway|upper }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-links">
+                            {% if not bill.is_paid %}
+                            <button type="button"
+                               title="Make Payment"
+                               class="action-link pay notranslate"
+                               style="background-color: #6772E5; border:none; cursor:pointer;"
+                               onclick="openPayModal('{% url 'manual-pay' bill.id %}', '{% url 'bill-pay' bill.id %}')">
+                                <span class="material-icons" style="color:#fff;">payments</span>
+                            </button>
+                            {% else %}
+                            <span class="action-link paid notranslate"
+                                  title="Payment Done"
+                                  style="background-color: #28a745;">
+                                <span class="material-icons" style="color:#fff;">done</span>
+                            </span>
+                            {% endif %}
+
+                            <a href="{% url 'bill-edit' bill.id %}" 
+                               title="Edit Bill"
+                               class="action-link edit notranslate"
+                               style="background-color: #ffc107;">
+                                <span class="material-icons" style="color:#212529;">edit</span>
+                            </a>
+                            <a href="{% url 'bill-delete' bill.id %}" 
+                               title="Delete Bill"
+                               class="action-link delete notranslate"
+                               style="background-color: #dc3545;"
+                               onclick="return confirm('Are you sure you want to delete Bill #{{ bill.invoice_number }}?')">
+                                <span class="material-icons" style="color:#fff;">delete</span>
+                            </a>
+
+                            <a href="{% url 'bill-download' bill.id %}" class="action-link download notranslate">
+                                <span class="material-icons" style="color:#fff;">download</span>
+                            </a>
+
+                            <a href="{% url 'bill-details' bill.id %}" class="action-link view notranslate">
+                                <span class="material-icons" style="color:#0d6efd;">visibility</span>
+                            </a>
+
+                            <a href="{% url 'bill-details' bill.id %}?print=yes" class="action-link print notranslate">
+                                <span class="material-icons" style="color:#28a745;">print</span>
+                            </a>
+
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr class="empty-row"><td colspan="8">No bills found</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-container">
+
+        <div class="pagination-info">
+            Showing {{ bills.start_index }} to {{ bills.end_index }} of {{ bills.paginator.count }} bills
+        </div>
+
+        <div class="pagination-controls">
+
+            <form method="GET">
+                {% for key,val in filter_params.items %}
+                    <input type="hidden" name="{{key}}" value="{{val}}">
+                {% endfor %}
+
+                <select name="per_page" onchange="this.form.submit()">
+                    {% for size in per_page_options %}
+                        <option value="{{size}}" {% if per_page == size %}selected{% endif %}>
+                            Show {{size}}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            {% if bills.has_previous %}
+                <a href="?page={{ bills.previous_page_number }}{% for k,v in filter_params.items %}&{{k}}={{v}}{% endfor %}&per_page={{per_page}}">‹ Prev</a>
+            {% else %}
+                <span>‹ Prev</span>
+            {% endif %}
+
+            {% for num in bills.paginator.page_range %}
+                {% if bills.number == num %}
+                    <span class="current-page">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}{% for k,v in filter_params.items %}&{{k}}={{v}}{% endfor %}&per_page={{per_page}}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if bills.has_next %}
+                <a href="?page={{ bills.next_page_number }}{% for k,v in filter_params.items %}&{{k}}={{v}}{% endfor %}&per_page={{per_page}}">Next ›</a>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{# ------------ PAYMENT MODAL ------------- #}
+<div id="payModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999;">
+  <div style="background:#fff; width:320px; margin:100px auto; padding:20px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0; margin-bottom:10px;">Select Payment Method</h3>
+
+    <form method="POST" id="paymentForm">
+      {% csrf_token %}
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+        <button type="submit" name="method" value="cash" style="padding:8px; cursor:pointer;">💵 Cash</button>
+        <button type="submit" name="method" value="upi" style="padding:8px; cursor:pointer;">📱 UPI</button>
+        <button type="submit" name="method" value="card" style="padding:8px; cursor:pointer;">💳 Card</button>
+        <a id="stripeBtn" style="text-align:center; padding:8px; border:1px solid #6772E5; border-radius:4px; text-decoration:none; cursor:pointer;">
+            🌐 Stripe (Online)
+        </a>
+      </div>
+
+      <button type="button" onclick="closePayModal()" style="padding:6px 10px; cursor:pointer;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function openPayModal(manualUrl, stripeUrl){
+  var modal = document.getElementById("payModal");
+  var form  = document.getElementById("paymentForm");
+  var stripeBtn = document.getElementById("stripeBtn");
+  form.action = manualUrl;
+  stripeBtn.href = stripeUrl;
+  modal.style.display = "block";
+}
+
+function closePayModal(){
+  document.getElementById("payModal").style.display = "none";
+}
+</script>
+
+{% endblock %}

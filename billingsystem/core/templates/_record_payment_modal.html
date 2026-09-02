@@ -1,0 +1,104 @@
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Record Payment for Bill #<span id="bill-invoice-no"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Outstanding Amount: <b id="modal-outstanding-amount"></b></p>
+                
+                <form method="POST" id="paymentForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_amount_paid" class="form-label">Amount Paying Now (₹)</label>
+                        <input type="number" step="0.01" class="form-control" id="id_amount_paid" name="amount_paid" required min="0.01">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="id_payment_method" name="payment_method" required onchange="togglePaymentDetails()">
+                            <option value="cash">Cash</option>
+                            <option value="upi">UPI</option>
+                            <option value="card">Card</option>
+                            <option value="bank">Bank Transfer</option>
+                            <option value="stripe">Online (Stripe)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="transactionIdDiv" style="display: none;">
+                        <label for="id_transaction_id" class="form-label">Transaction ID / Reference No.</label>
+                        <input type="text" class="form-control" id="id_transaction_id" name="transaction_id">
+                    </div>
+                    
+                    <div class="mb-3" id="cardLastFourDiv" style="display: none;">
+                        <label for="id_card_last_four" class="form-label">Card Last 4 Digits</label>
+                        <input type="text" class="form-control" id="id_card_last_four" name="card_last_four" maxlength="4">
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="modalSubmitButton">Record Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePaymentDetails() {
+        const method = document.getElementById('id_payment_method').value;
+        document.getElementById('transactionIdDiv').style.display = 'none';
+        document.getElementById('cardLastFourDiv').style.display = 'none';
+        document.getElementById('modalSubmitButton').textContent = 'Record Payment';
+
+        if (method === 'upi' || method === 'bank') {
+            document.getElementById('transactionIdDiv').style.display = 'block';
+        } else if (method === 'card') {
+            document.getElementById('cardLastFourDiv').style.display = 'block';
+        } else if (method === 'stripe') {
+             document.getElementById('modalSubmitButton').textContent = 'Proceed to Stripe';
+        }
+        
+        // Update form action based on selected method (requires billId to be set via JS on modal show)
+        const paymentModal = document.getElementById('paymentModal');
+        const billId = paymentModal.querySelector('#paymentForm').getAttribute('data-bill-id');
+        const form = document.getElementById('paymentForm');
+        
+        if (billId) {
+            if (method === 'stripe') {
+                form.action = "{% url 'bill-pay' bill_id=0 %}".replace('/0/', '/' + billId + '/');
+            } else {
+                 form.action = "{% url 'record-payment' bill_id=0 %}".replace('/0/', '/' + billId + '/');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const paymentModal = document.getElementById('paymentModal');
+        const form = document.getElementById('paymentForm');
+
+        paymentModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const billId = button.getAttribute('data-bill-id');
+            const outstanding = button.getAttribute('data-outstanding');
+            const invoiceNo = button.getAttribute('data-invoice-no');
+
+            // Set the dynamic ID on the form itself for JS to retrieve later
+            form.setAttribute('data-bill-id', billId);
+            
+            document.getElementById('bill-invoice-no').textContent = invoiceNo || billId;
+            document.getElementById('modal-outstanding-amount').textContent = '₹' + outstanding;
+            document.getElementById('id_amount_paid').value = outstanding;
+            document.getElementById('id_amount_paid').max = outstanding;
+            
+            // Re-run the toggle logic for initial state and set the form action
+            document.getElementById('id_payment_method').value = 'cash'; // Reset to cash default
+            togglePaymentDetails();
+        });
+        
+        // Attach listener to method change after modal is loaded
+        document.getElementById('id_payment_method').addEventListener('change', togglePaymentDetails);
+    });
+</script>

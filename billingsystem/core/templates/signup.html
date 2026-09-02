@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+
+<div style="max-width:450px;margin:60px auto;border:1px solid #ccc;padding:28px;border-radius:5px;">
+    <h2 style="text-align:center;margin-bottom:25px;">Create Account</h2>
+
+    <!-- Display errors -->
+    {% if form.errors %}
+        <div style="background:#f8d7da;color:#721c24;padding:10px;font-size:14px;border:1px solid #f5c6cb;
+                     border-radius:4px;margin-bottom:18px;">
+            Please correct the errors below.
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {% comment %} {{ form.as_p }} {% endcomment %}
+
+        <label>Full Name</label>
+        <input type="text" name="full_name" required
+               style="width:100%;padding:8px;margin:6px 0;border:1px solid #999;border-radius:3px;">
+
+        <label>Email</label>
+        <input type="email" name="email" required
+               style="width:100%;padding:8px;margin:6px 0;border:1px solid #999;border-radius:3px;">
+
+        <label>Username</label>
+        <input type="text" name="username" required
+               style="width:100%;padding:8px;margin:6px 0;border:1px solid #999;border-radius:3px;">
+
+        <label>Password</label>
+        <input type="password" name="password1" required
+               style="width:100%;padding:8px;margin:6px 0;border:1px solid #999;border-radius:3px;">
+
+        <label>Confirm Password</label>
+        <input type="password" name="password2" required
+               style="width:100%;padding:8px;margin:6px 0;border:1px solid #999;border-radius:3px;">
+
+        <button type="submit"
+                style="width:100%;padding:10px;background:#000;color:#fff;border:none;border-radius:3px;margin-top:18px;">
+            Sign Up
+        </button>
+
+        <p style="text-align:center;margin-top:14px;font-size:14px;color:#555;">
+            Already have an account?
+            <a href="{% url 'login' %}" style="color:#000;text-decoration:underline;">Login</a>
+        </p>
+        
+    </form>
+</div>
+
+{% endblock %}

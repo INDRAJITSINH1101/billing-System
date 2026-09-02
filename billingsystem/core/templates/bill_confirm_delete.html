@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Confirm Delete Bill{% endblock %}
+{% block content %}
+<div class="confirm-container" style="padding: 20px; text-align: center;">
+    <h2 style="color: #dc3545;">⚠️ Confirm Bill Deletion</h2>
+    <p>Are you absolutely sure you want to delete the bill for **{{ bill.customer_name }}**?</p>
+    <p>Invoice No: **{{ bill.invoice_number|default:"N/A" }}**</p>
+    <p>Total Amount: **₹{{ bill.total_amount|floatformat:2 }}**</p>
+    <p style="color: #dc3545; font-weight: bold;">This action cannot be undone.</p>
+
+    <form method="POST" action="{% url 'bill-delete' bill.id %}" style="margin-top: 20px;">
+        {% csrf_token %}
+        <button type="submit" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; margin-right: 10px;">
+            Yes, Delete Bill
+        </button>
+        <a href="{% url 'bill-details' bill.id %}" style="background-color: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

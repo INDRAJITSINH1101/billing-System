@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+    {% if is_editing %}Edit Bill #{{ bill.invoice_number|default:bill.id }}{% else %}Create Customer Bill{% endif %}
+{% endblock %}
+{% load i18n %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/bill_create.css' %}">
+
+{# Dynamically set form action URL #}
+{% if is_editing %}
+<form method="POST" action="{% url 'bill-edit' bill.id %}">
+{% else %}
+<form method="POST" action="{% url 'bill-create' %}">
+{% endif %}
+{% csrf_token %}
+
+<div class="bill-card">
+
+    <h2 style="text-align:center;margin-bottom:15px;font-weight:bold;">
+        {% if is_editing %}Edit Bill #{{ bill.invoice_number|default:bill.id }}{% else %}Customer Bill{% endif %}
+    </h2>
+    <div class="section-heading">{% trans "Customer Details"%}</div>
+    
+    <div class="input-row">
+        <div class="input-col">
+            <label>{% trans "Customer Name"%}</label>
+            {# Pre-fill customer name #}
+            <input type="text" name="customer_name" id="id_customer_name" 
+                   value="{{ bill.customer_name|default:'' }}">
+        </div>
+        <div class="input-col">
+            <label>{% trans "Phone Number"%}</label>
+            {# Pre-fill phone #}
+            <input type="text" name="phone" id="id_phone" onkeyup="autoFillCustomer()"
+                   value="{{ bill.phone|default:'' }}">
+        </div>
+    </div>
+    
+    <div class="input-row">
+        <div class="input-col">
+            <label>{% trans "Email"%}</label>
+            {# Pre-fill email #}
+            <input type="email" name="email" id="id_email"
+                   value="{{ bill.email|default:'' }}">
+        </div>
+    </div>
+    
+    <div class="input-row">
+        <div class="input-col">
+            <label>{% trans "Due Date (Optional)"%}</label>
+            {# Pre-fill due date #}
+            <input type="date" name="due_date" id="id_due_date"
+                   value="{{ bill.due_date|date:'Y-m-d'|default:'' }}">
+        </div>
+        <div class="input-col">
+            </div>
+    </div>
+    <div class="section-heading">Item Details</div>
+
+    <table id="item-table">
+        <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Total Amt</th>
+            <th>Remove</th>
+        </tr>
+        </thead>
+
+        <tbody id="item-rows">
+            {# Check if editing and loop through existing items #}
+            {% if is_editing %}
+                {% for item in items %}
+                    <tr class="item-row">
+                        <td><input type="text" class="pname" name="pname" value="{{ item.product_name|default:'' }}"></td> 
+                        <td><input type="number" class="qty" name="qty" value="{{ item.qty|default:1 }}"></td>
+                        <td><input type="number" step="1.0" class="rate" name="rate" value="{{ item.rate|default:0 }}"></td>
+                        <td><input type="number" step="1.0" class="amount" name="amount" value="{{ item.amount|default:0 }}" readonly></td>
+                        <td><button type="button" class="remove-row delete-btn">
+                            <span class="material-icons notranslate">delete</span></button><td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                {# Default single empty row for new bill #}
+                <tr class="item-row">
+                        <td><input type="text" class="pname" name="pname"></td> 
+        
+                        <td><input type="number" class="qty" name="qty" value="1"></td>
+        
+                        <td><input type="number" step="1.0" class="rate" name="rate" value="0"></td>
+                        <td><input type="number" step="1.0" class="amount" name="amount" readonly></td>
+                        <td><button type="button" class="remove-row delete-btn">
+                            <span class="material-icons notranslate">delete</span></button><td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <button type="button" id="add-item" style="margin-top:10px;">+ Add Product</button>
+
+    <div class="section-heading">Discount & Tax</div>
+
+    <div class="input-row">
+        <div class="input-col">
+            <label>Discount (%)</label>
+            {# Pre-fill discount percent #}
+            <input type="number" step="1.0" name="discount_percent" value="{{ bill.discount_percent|default:0 }}">
+        </div>
+        <div class="input-col">
+            <label>Discount (Amount)</label>
+            {# Pre-fill discount amount #}
+            <input type="number" step="1.0" name="discount_amount" value="{{ bill.discount_amount|default:0 }}">
+        </div>
+    </div>
+
+    <div class="input-row">
+        <div class="input-col">
+            <label>Total GST %</label>
+            {# Pre-fill total GST rate. Calculate from split rates for display #}
+            {% with total_gst_rate=bill.sgst_rate|add:bill.cgst_rate %}
+            <input type="number" step="1.0" name="total_gst_rate" value="{{ total_gst_rate|default:0 }}">
+            {% endwith %}
+        </div>
+        <div class="input-col">
+            </div>
+    </div>
+
+    <div class="input-row">
+        <div class="input-col">
+            <label>SGST % (Auto-Split)</label>
+            {# Pre-fill SGST rate (readonly) #}
+            <input type="number" step="1.0" name="sgst_rate" value="{{ bill.sgst_rate|default:0 }}" readonly>
+        </div>
+        <div class="input-col">
+            <label>CGST % (Auto-Split)</label>
+            {# Pre-fill CGST rate (readonly) #}
+            <input type="number" step="1.0" name="cgst_rate" value="{{ bill.cgst_rate|default:0 }}" readonly>
+        </div>
+    </div>
+    <div class="total-box-wrapper">
+        <div class="total-box">
+        <table>
+            <tr>
+                <td>Sub Total</td>
+                {# Pre-fill sub_total (readonly) #}
+                <td><input type="number" name="sub_total" value="{{ bill.sub_total|default:0 }}" readonly></td>
+            </tr>
+            <tr>
+                <td>Discount</td>
+                {# Pre-fill final_discount (readonly) #}
+                <td><input type="number" name="final_discount" value="{{ bill.final_discount|default:0 }}" readonly></td>
+            </tr>
+            <tr>
+                <td>Taxable Amount</td>
+                {# Pre-fill taxable_amount (readonly) #}
+                <td><input type="number" name="taxable_amount" value="{{ bill.taxable_amount|default:0 }}" readonly></td>
+            </tr>
+            <tr>
+                <td>SGST Amount</td>
+                {# Pre-fill sgst_amount (readonly) #}
+                <td><input type="number" name="sgst_amount" value="{{ bill.sgst_amount|default:0 }}" readonly></td>
+            </tr>
+            <tr>
+                <td>CGST Amount</td>
+                {# Pre-fill cgst_amount (readonly) #}
+                <td><input type="number" name="cgst_amount" value="{{ bill.cgst_amount|default:0 }}" readonly></td>
+            </tr>
+            <tr>
+                <td><b>Grand Total</b></td>
+                {# Pre-fill grand_total (readonly) #}
+                <td><input type="number" name="grand_total" value="{{ bill.total_amount|default:0 }}" readonly></td>
+            </tr>
+            
+        </table>
+    </div>
+    </div>
+
+</div>
+<div class="submit-div">
+    <button type="submit" class="submit-btn">
+        {% if is_editing %}Update Bill{% else %}Save Bill{% endif %}
+    </button>
+</div>
+
+
+</form>
+
+<script>
+function calculateBill() {
+
+    let subTotal = 0;
+
+    document.querySelectorAll(".item-row").forEach(row => {
+        let qty  = parseFloat(row.querySelector(".qty").value || 0);
+        let rate = parseFloat(row.querySelector(".rate").value || 0);
+        let total = qty * rate;
+
+        row.querySelector(".amount").value = total.toFixed(2);
+        subTotal += total;
+    });
+
+    document.querySelector("input[name='sub_total']").value = subTotal.toFixed(2);
+
+    let dPercent = parseFloat(document.querySelector("input[name='discount_percent']").value || 0);
+    let dAmount  = parseFloat(document.querySelector("input[name='discount_amount']").value || 0);
+
+    let discountValue = (subTotal * dPercent / 100) + dAmount;
+    document.querySelector("input[name='final_discount']").value = discountValue.toFixed(2);
+
+    let taxableAmount = subTotal - discountValue;
+    document.querySelector("input[name='taxable_amount']").value = taxableAmount.toFixed(2);
+
+    let totalGstRate = parseFloat(document.querySelector("input[name='total_gst_rate']").value || 0);
+    let halfRate = totalGstRate / 2;
+
+    document.querySelector("input[name='sgst_rate']").value = halfRate.toFixed(2);
+    document.querySelector("input[name='cgst_rate']").value = halfRate.toFixed(2);
+
+    let sgstRate = halfRate;
+    let cgstRate = halfRate;
+    let sgstAmt = taxableAmount * (sgstRate / 100);
+    let cgstAmt = taxableAmount * (cgstRate / 100);
+
+    document.querySelector("input[name='sgst_amount']").value = sgstAmt.toFixed(2);
+    document.querySelector("input[name='cgst_amount']").value = cgstAmt.toFixed(2);
+
+    let grand = taxableAmount + sgstAmt + cgstAmt;
+
+    document.querySelector("input[name='grand_total']").value = grand.toFixed(2);
+}
+
+document.addEventListener("input", calculateBill);
+
+document.getElementById("add-item").addEventListener("click", ()=>{
+    let tr = document.querySelector(".item-row").cloneNode(true);
+    // Clear the values for the new cloned row
+    tr.querySelectorAll("input").forEach(inp=> {
+        if(inp.classList.contains("qty")) {
+            inp.value = 1;
+        } else if (inp.classList.contains("rate")) {
+            inp.value = 0;
+        } else {
+            inp.value = ""; // Clear product name
+        }
+    });
+    tr.querySelector(".amount").value = "0.00";
+    document.querySelector("#item-rows").appendChild(tr);
+    calculateBill(); // Recalculate totals after adding a new row
+});
+
+document.addEventListener("click", e=>{
+    if(e.target.classList.contains("remove-row")){
+        if(document.querySelectorAll(".item-row").length > 1){
+            e.target.closest("tr").remove();
+            calculateBill();
+        }
+    }
+});
+
+function initialLoad() {
+    // If we are editing, we already have rows, so just calculate.
+    // If we are creating, the default row needs values set up.
+    if (document.querySelectorAll(".item-row").length === 1 && !document.querySelector(".item-row .pname").value) {
+        document.querySelector(".item-row .qty").value = 1;
+        document.querySelector(".item-row .rate").value = 0;
+    }
+    calculateBill();
+}
+
+document.addEventListener("DOMContentLoaded", initialLoad);
+
+function autoFillCustomer() {
+    let phone = document.getElementById("id_phone").value;
+    
+    if (phone.length < 10) return;
+
+    fetch(`/bill/bills/check-customer/?phone=${phone}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.found) {
+                document.getElementById("id_customer_name").value = data.name;
+                document.getElementById("id_email").value = data.email;
+            }
+        });
+}
+
+</script>
+
+{% endblock %}
